@@ -181,50 +181,6 @@ StatisticsTracker.prototype.GetStatisticsJSON = function()
 };
 
 /**
- * UNUSED
- * This function calculates the counts of all living units, broken down by type.
- * It loops over all entities, so is probably quite slow. Ideally this breakdown would be included in the statistics. 
- * 
- * @return Breakdown of the living units
- */
-StatisticsTracker.prototype.GetUnitsAlive = function() {
-	let cmpPlayer = Engine.QueryInterface(this.entity, IID_Player);
-
-	let cmpRangeManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_RangeManager);
-	let entities = cmpRangeManager.GetEntitiesByPlayer(cmpPlayer.playerID);
-
-	let unitsAlive = { total: 0 };
-	for (let unitClass of this.unitsClasses)
-		unitsAlive[unitClass] = 0;
-
-	for (let entity of entities)
-	{
-		let cmpEntityIdentity = Engine.QueryInterface(entity, IID_Identity);
-		if (!cmpEntityIdentity)
-			break;
-
-		if (cmpEntityIdentity.HasClass("Unit"))
-		{
-			let classes = cmpEntityIdentity.GetClassesList();
-			if (!classes)
-				return;
-
-			for(let type in classes)
-				if (unitsAlive[type] !== undefined)
-				{
-					++unitsAlive[type];
-				}
-
-			if (!cmpEntityIdentity.HasClass("Domestic"))
-				++unitsAlive.total;
-		}
-
-	}
-
-	return unitsAlive;
-}
-
-/**
  * Increments counter associated with certain entity/counter and type of given entity.
  * @param cmpIdentity - the entity identity component.
  * @param counter - the name of the counter to increment (e.g. "unitsTrained").
@@ -396,13 +352,13 @@ StatisticsTracker.prototype.CapturedEntity = function(capturedEntity)
  */
 StatisticsTracker.prototype.GetResourceCounts = function() {
 	let cmpPlayer = Engine.QueryInterface(this.entity, IID_Player);
-	if (!cmpPlayer) {
-		let empty = {};
-		for (let res of Resources.GetCodes())
-			empty[res] = 0;
-		return empty;
-	}
-	return cmpPlayer.GetResourceCounts();
+	if (cmpPlayer)
+		return cmpPlayer.GetResourceCounts();
+
+	let empty = {};
+	for (let res of Resources.GetCodes())
+		empty[res] = 0;
+	return empty;
 }
 
 /**
