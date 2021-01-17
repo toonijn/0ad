@@ -131,6 +131,7 @@ StatisticsTracker.prototype.GetStatistics = function()
 		"enemyBuildingsDestroyedValue": this.enemyBuildingsDestroyedValue,
 		"buildingsCaptured": this.buildingsCaptured,
 		"buildingsCapturedValue": this.buildingsCapturedValue,
+		"resourcesCount": this.GetResourceCounts(),
 		"resourcesGathered": this.resourcesGathered,
 		"resourcesUsed": this.resourcesUsed,
 		"resourcesSold": this.resourcesSold,
@@ -140,6 +141,7 @@ StatisticsTracker.prototype.GetStatistics = function()
 		"tradeIncome": this.tradeIncome,
 		"treasuresCollected": this.treasuresCollected,
 		"lootCollected": this.lootCollected,
+		"populationCount": this.GetPopulationCount(),
 		"percentMapExplored": this.GetPercentMapExplored(),
 		"teamPercentMapExplored": this.GetTeamPercentMapExplored(),
 		"percentMapControlled": this.GetPercentMapControlled(),
@@ -177,6 +179,50 @@ StatisticsTracker.prototype.GetStatisticsJSON = function()
 
 	return JSON.stringify(playerStatistics, null, "\t");
 };
+
+/**
+ * UNUSED
+ * This function calculates the counts of all living units, broken down by type.
+ * It loops over all entities, so is probably quite slow. Ideally this breakdown would be included in the statistics. 
+ * 
+ * @return Breakdown of the living units
+ */
+StatisticsTracker.prototype.GetUnitsAlive = function() {
+	let cmpPlayer = Engine.QueryInterface(this.entity, IID_Player);
+
+	let cmpRangeManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_RangeManager);
+	let entities = cmpRangeManager.GetEntitiesByPlayer(cmpPlayer.playerID);
+
+	let unitsAlive = { total: 0 };
+	for (let unitClass of this.unitsClasses)
+		unitsAlive[unitClass] = 0;
+
+	for (let entity of entities)
+	{
+		let cmpEntityIdentity = Engine.QueryInterface(entity, IID_Identity);
+		if (!cmpEntityIdentity)
+			break;
+
+		if (cmpEntityIdentity.HasClass("Unit"))
+		{
+			let classes = cmpEntityIdentity.GetClassesList();
+			if (!classes)
+				return;
+
+			for(let type in classes)
+				if (unitsAlive[type] !== undefined)
+				{
+					++unitsAlive[type];
+				}
+
+			if (!cmpEntityIdentity.HasClass("Domestic"))
+				++unitsAlive.total;
+		}
+
+	}
+
+	return unitsAlive;
+}
 
 /**
  * Increments counter associated with certain entity/counter and type of given entity.
@@ -346,6 +392,20 @@ StatisticsTracker.prototype.CapturedEntity = function(capturedEntity)
 };
 
 /**
+ * @return The amounts of available resources
+ */
+StatisticsTracker.prototype.GetResourceCounts = function() {
+	let cmpPlayer = Engine.QueryInterface(this.entity, IID_Player);
+	if (!cmpPlayer) {
+		let empty = {};
+		for (let res of Resources.GetCodes())
+			empty[res] = 0;
+		return empty;
+	}
+	return cmpPlayer.GetResourceCounts();
+}
+
+/**
  * @param {string} type - generic type of resource.
  * @param {number} amount - amount of resource, whick should be added.
  * @param {string} specificType - specific type of resource.
@@ -401,6 +461,13 @@ StatisticsTracker.prototype.IncreaseTributesReceivedCounter = function(amount)
 StatisticsTracker.prototype.IncreaseTradeIncomeCounter = function(amount)
 {
 	this.tradeIncome += amount;
+};
+
+StatisticsTracker.prototype.GetPopulationCount = function () {
+	let cmpPlayer = Engine.QueryInterface(this.entity, IID_Player);
+	if (!cmpPlayer)
+		return 0;
+	return cmpPlayer.GetPopulationCount();
 };
 
 StatisticsTracker.prototype.IncreaseSuccessfulBribesCounter = function()
