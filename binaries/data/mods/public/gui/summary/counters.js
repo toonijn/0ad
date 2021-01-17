@@ -17,7 +17,7 @@ function formatSummaryValue(values)
 
 	let ret = "";
 	for (let type in values)
-		if(!g_SummaryTypes[type].hide)
+		if(!g_SummaryTypes[type].hideInSummary)
 			ret += (g_SummaryTypes[type].color ?
 				coloredText(values[type], g_SummaryTypes[type].color) :
 				values[type]) + g_SummaryTypes[type].postfix;
@@ -325,9 +325,10 @@ function calculateKillDeathRatio(playerState, index)
 		playerState.sequences.unitsLost.total[index]);
 }
 
-function calculatePopulationCount(playerState, index) {
+function calculatePopulationCount(playerState, index)
+{
 	return { "population": playerState.sequences.populationCount[index] };
-}
+};
 
 function calculateMapExploration(playerState, index)
 {

@@ -193,7 +193,7 @@ var getScorePanelsData = () => [
 		"headings": [
 			{ "identifier": "playername", "caption": translate("Player name"), "yStart": 26, "width": 200 },
 			{ "identifier": "killDeath", "caption": translate("Kill / Death ratio"), "yStart": 16, "width": 100, "format": "DECIMAL2" },
-			{ "identifier": "population", "caption": translate("Population"), "yStart": 16, "width": 100, "hide": true },
+			{ "identifier": "population", "caption": translate("Population"), "yStart": 16, "width": 100, "hideInSummary": true },
 			{ "identifier": "mapControlPeak", "caption": translate("Map control (peak)"), "yStart": 16, "width": 100, "format": "PERCENTAGE" },
 			{ "identifier": "mapControl", "caption": translate("Map control (finish)"), "yStart": 16, "width": 100, "format": "PERCENTAGE" },
 			{ "identifier": "mapExploration", "caption": translate("Map exploration"), "yStart": 16, "width": 100, "format": "PERCENTAGE" },
@@ -214,7 +214,7 @@ var getScorePanelsData = () => [
 		"titleHeadings": [],
 		"counters": [
 			{ "width": 100, "fn": calculateKillDeathRatio, "verticalOffset": 12 },
-			{ "width": 100, "fn": calculatePopulationCount, "verticalOffset": 12, "hide": true },
+			{ "width": 100, "fn": calculatePopulationCount, "verticalOffset": 12, "hideInSummary": true },
 			{ "width": 100, "fn": calculateMapPeakControl, "verticalOffset": 12 },
 			{ "width": 100, "fn": calculateMapFinalControl, "verticalOffset": 12 },
 			{ "width": 100, "fn": calculateMapExploration, "verticalOffset": 12 },
@@ -259,7 +259,7 @@ function resetGeneralPanel()
 
 function updateGeneralPanelHeadings(allHeadings)
 {
-	let headings = allHeadings.filter(function(heading) { return !heading.hide; });
+	let headings = allHeadings.filter(heading => !heading.hideInSummary);
 
 	let left = 50;
 	for (let h in headings)
@@ -301,7 +301,7 @@ function updateGeneralPanelTitles(titleHeadings)
 
 function updateGeneralPanelCounter(allCounters)
 {
-	let counters = allCounters.filter(function(counter) { return !counter.hide; });
+	let counters = allCounters.filter(counter => !counter.hideInSummary);
 	let rowPlayerObjectWidth = 0;
 	let left = 0;
 

@@ -42,7 +42,7 @@ var g_SummaryTypes = {
 	},
 	"count": {
 		"caption": translate("Count"),
-		"hide": true
+		"hideInSummary": true
 	},
 	"sent": {
 		"color": g_TypeColors.green,

@@ -350,16 +350,14 @@ StatisticsTracker.prototype.CapturedEntity = function(capturedEntity)
 /**
  * @return The amount of available resources.
  */
-StatisticsTracker.prototype.GetResourceCounts = function() {
+StatisticsTracker.prototype.GetResourceCounts = function()
+{
 	let cmpPlayer = Engine.QueryInterface(this.entity, IID_Player);
 	if (cmpPlayer)
 		return cmpPlayer.GetResourceCounts();
 
-	let noResources = {};
-	for (let res of Resources.GetCodes())
-		noResources[res] = 0;
-	return noResources;
-}
+	return Object.fromEntries(Resources.GetCodes().map(res => [res, 0]));
+};
 
 /**
  * @param {string} type - generic type of resource.
@@ -419,7 +417,8 @@ StatisticsTracker.prototype.IncreaseTradeIncomeCounter = function(amount)
 	this.tradeIncome += amount;
 };
 
-StatisticsTracker.prototype.GetPopulationCount = function () {
+StatisticsTracker.prototype.GetPopulationCount = function()
+{
 	let cmpPlayer = Engine.QueryInterface(this.entity, IID_Player);
 	if (!cmpPlayer)
 		return 0;
