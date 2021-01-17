@@ -348,17 +348,17 @@ StatisticsTracker.prototype.CapturedEntity = function(capturedEntity)
 };
 
 /**
- * @return The amounts of available resources
+ * @return The amount of available resources.
  */
 StatisticsTracker.prototype.GetResourceCounts = function() {
 	let cmpPlayer = Engine.QueryInterface(this.entity, IID_Player);
 	if (cmpPlayer)
 		return cmpPlayer.GetResourceCounts();
 
-	let empty = {};
+	let noResources = {};
 	for (let res of Resources.GetCodes())
-		empty[res] = 0;
-	return empty;
+		noResources[res] = 0;
+	return noResources;
 }
 
 /**
