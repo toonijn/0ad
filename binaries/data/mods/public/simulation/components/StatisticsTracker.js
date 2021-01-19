@@ -353,10 +353,9 @@ StatisticsTracker.prototype.CapturedEntity = function(capturedEntity)
 StatisticsTracker.prototype.GetResourceCounts = function()
 {
 	let cmpPlayer = Engine.QueryInterface(this.entity, IID_Player);
-	if (cmpPlayer)
-		return cmpPlayer.GetResourceCounts();
-
-	return Object.fromEntries(Resources.GetCodes().map(res => [res, 0]));
+	return cmpPlayer ?
+		cmpPlayer.GetResourceCounts() :
+		Object.fromEntries(Resources.GetCodes().map(res => [res, 0]));
 };
 
 /**
@@ -420,9 +419,7 @@ StatisticsTracker.prototype.IncreaseTradeIncomeCounter = function(amount)
 StatisticsTracker.prototype.GetPopulationCount = function()
 {
 	let cmpPlayer = Engine.QueryInterface(this.entity, IID_Player);
-	if (!cmpPlayer)
-		return 0;
-	return cmpPlayer.GetPopulationCount();
+	return cmpPlayer ? cmpPlayer.GetPopulationCount() : 0;
 };
 
 StatisticsTracker.prototype.IncreaseSuccessfulBribesCounter = function()

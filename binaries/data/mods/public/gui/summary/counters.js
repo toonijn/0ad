@@ -328,7 +328,7 @@ function calculateKillDeathRatio(playerState, index)
 function calculatePopulationCount(playerState, index)
 {
 	return { "population": playerState.sequences.populationCount[index] };
-};
+}
 
 function calculateMapExploration(playerState, index)
 {
