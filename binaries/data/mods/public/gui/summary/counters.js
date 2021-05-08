@@ -88,7 +88,8 @@ function summaryArraySum(array)
 	});
 }
 
-function peakSummary(data, index) {
+function peakSummary(data, index)
+{
 	let m = -Infinity;
 	for(let i = 0; i < index && i < data.length; ++i)
 		m = Math.max(m, data[i]);
@@ -238,7 +239,7 @@ function calculatePopulation(playerState, index, type, summarize)
 		"population": playerState.sequences.population[type][index]
 	};
 	if(summarize)
-		data["populationPeak"] = peakSummary(playerState.sequences.population[type], index)
+		data.populationPeak = peakSummary(playerState.sequences.population[type], index);
 	return data;
 }
 

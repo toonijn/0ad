@@ -419,8 +419,8 @@ StatisticsTracker.prototype.IncreaseTradeIncomeCounter = function(amount)
 StatisticsTracker.prototype.GetCurrentPopulation = function()
 {
 	let activeUnits = {
-		total: 0,
-		limit: 0
+		"total": 0,
+		"limit": 0
 	};
 	for (let unitClass of this.unitsClasses)
 		activeUnits[unitClass] = 0;
@@ -433,7 +433,8 @@ StatisticsTracker.prototype.GetCurrentPopulation = function()
 	activeUnits.limit = cmpPlayer.GetPopulationLimit();
 
 	let cmpRangeManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_RangeManager);
-	for(let entity of cmpRangeManager.GetEntitiesByPlayer(cmpPlayer.playerID)) {
+	for(let entity of cmpRangeManager.GetEntitiesByPlayer(cmpPlayer.playerID))
+	{
 		let entityIdentity = Engine.QueryInterface(entity, IID_Identity);
 		let classes = entityIdentity.GetClassesList();
 		let popcost = -1;
@@ -441,7 +442,8 @@ StatisticsTracker.prototype.GetCurrentPopulation = function()
 		for (let unitClass of this.unitsClasses)
 			if(classes.indexOf(unitClass) != -1)
 			{
-				if(popcost == -1) {
+				if(popcost == -1)
+				{
 					let entityCost = Engine.QueryInterface(entity, IID_Cost);
 					popcost = entityCost.GetPopCost();
 				}
