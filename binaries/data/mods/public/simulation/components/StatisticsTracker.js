@@ -141,7 +141,7 @@ StatisticsTracker.prototype.GetStatistics = function()
 		"tradeIncome": this.tradeIncome,
 		"treasuresCollected": this.treasuresCollected,
 		"lootCollected": this.lootCollected,
-		"populationCount": this.GetPopulationCount(),
+		"population": this.GetCurrentPopulation(),
 		"percentMapExplored": this.GetPercentMapExplored(),
 		"teamPercentMapExplored": this.GetTeamPercentMapExplored(),
 		"percentMapControlled": this.GetPercentMapControlled(),
@@ -416,10 +416,40 @@ StatisticsTracker.prototype.IncreaseTradeIncomeCounter = function(amount)
 	this.tradeIncome += amount;
 };
 
-StatisticsTracker.prototype.GetPopulationCount = function()
+StatisticsTracker.prototype.GetCurrentPopulation = function()
 {
+	let activeUnits = {
+		total: 0,
+		limit: 0
+	};
+	for (let unitClass of this.unitsClasses)
+		activeUnits[unitClass] = 0;
+
 	let cmpPlayer = Engine.QueryInterface(this.entity, IID_Player);
-	return cmpPlayer ? cmpPlayer.GetPopulationCount() : 0;
+	if(!cmpPlayer)
+		return activeUnits;
+
+	activeUnits.total = cmpPlayer.GetPopulationCount();
+	activeUnits.limit = cmpPlayer.GetPopulationLimit();
+
+	let cmpRangeManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_RangeManager);
+	for(let entity of cmpRangeManager.GetEntitiesByPlayer(cmpPlayer.playerID)) {
+		let entityIdentity = Engine.QueryInterface(entity, IID_Identity);
+		let classes = entityIdentity.GetClassesList();
+		let popcost = -1;
+
+		for (let unitClass of this.unitsClasses)
+			if(classes.indexOf(unitClass) != -1)
+			{
+				if(popcost == -1) {
+					let entityCost = Engine.QueryInterface(entity, IID_Cost);
+					popcost = entityCost.GetPopCost();
+				}
+				activeUnits[unitClass] += popcost;
+			}
+	}
+
+	return activeUnits;
 };
 
 StatisticsTracker.prototype.IncreaseSuccessfulBribesCounter = function()

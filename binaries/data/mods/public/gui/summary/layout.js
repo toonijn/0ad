@@ -106,6 +106,44 @@ var getScorePanelsData = () => [
 		"teamCounterFn": calculateUnitsTeam
 	},
 	{
+		"label": translate("Population"),
+		"headings": [
+			{ "identifier": "playername", "caption": translate("Player name"), "yStart": 26, "width": 200 },
+			{ "identifier": "total", "caption": translate("Total"), "yStart": 34, "width": 105 },
+			{ "identifier": "limit", "caption": translate("Limit"), "yStart": 34, "width": 85 },
+			{ "identifier": "FemaleCitizen", "caption": translate("Female Citizen"), "yStart": 34, "width": 85 },
+			{ "identifier": "Infantry", "caption": translate("Infantry"), "yStart": 34, "width": 85 },
+			{ "identifier": "Cavalry", "caption": translate("Cavalry"), "yStart": 34, "width": 85 },
+			{ "identifier": "Champion", "caption": translate("Champion"), "yStart": 34, "width": 85 },
+			{ "identifier": "Siege", "caption": translate("Siege"), "yStart": 34, "width": 85 },
+			{ "identifier": "Ship", "caption": translate("Navy"), "yStart": 34, "width": 85 },
+			{ "identifier": "Trader", "caption": translate("Traders"), "yStart": 34, "width": 85 }
+		],
+		"titleHeadings": [
+			{
+				"caption": sprintf(translate("(%(current)s / %(peak)s)"),
+					{
+						"current": getColoredTypeTranslation("population"),
+						"peak": getColoredTypeTranslation("populationPeak"),
+					}),
+				"yStart": 16,
+				"width": 85 * 8 + 105
+			},
+		],
+		"counters": [
+			{ "width": 105, "fn": calculatePopulation, "verticalOffset": 3 },
+			{ "width": 85, "fn": calculatePopulation, "verticalOffset": 3 },
+			{ "width": 85, "fn": calculatePopulation, "verticalOffset": 3 },
+			{ "width": 85, "fn": calculatePopulation, "verticalOffset": 3 },
+			{ "width": 85, "fn": calculatePopulation, "verticalOffset": 3 },
+			{ "width": 85, "fn": calculatePopulation, "verticalOffset": 3 },
+			{ "width": 85, "fn": calculatePopulation, "verticalOffset": 3 },
+			{ "width": 85, "fn": calculatePopulation, "verticalOffset": 3 },
+			{ "width": 85, "fn": calculatePopulation, "verticalOffset": 3 }
+		],
+		"teamCounterFn": calculatePopulationTeam
+	},
+	{
 		"label": translate("Resources"),
 		"headings": [
 			{ "identifier": "playername", "caption": translate("Player name"), "yStart": 26, "width": 200 },
@@ -193,7 +231,6 @@ var getScorePanelsData = () => [
 		"headings": [
 			{ "identifier": "playername", "caption": translate("Player name"), "yStart": 26, "width": 200 },
 			{ "identifier": "killDeath", "caption": translate("Kill / Death ratio"), "yStart": 16, "width": 100, "format": "DECIMAL2" },
-			{ "identifier": "population", "caption": translate("Population"), "yStart": 16, "width": 100, "hideInSummary": true },
 			{ "identifier": "mapControlPeak", "caption": translate("Map control (peak)"), "yStart": 16, "width": 100, "format": "PERCENTAGE" },
 			{ "identifier": "mapControl", "caption": translate("Map control (finish)"), "yStart": 16, "width": 100, "format": "PERCENTAGE" },
 			{ "identifier": "mapExploration", "caption": translate("Map exploration"), "yStart": 16, "width": 100, "format": "PERCENTAGE" },
@@ -214,7 +251,6 @@ var getScorePanelsData = () => [
 		"titleHeadings": [],
 		"counters": [
 			{ "width": 100, "fn": calculateKillDeathRatio, "verticalOffset": 12 },
-			{ "width": 100, "fn": calculatePopulationCount, "verticalOffset": 12, "hideInSummary": true },
 			{ "width": 100, "fn": calculateMapPeakControl, "verticalOffset": 12 },
 			{ "width": 100, "fn": calculateMapFinalControl, "verticalOffset": 12 },
 			{ "width": 100, "fn": calculateMapExploration, "verticalOffset": 12 },

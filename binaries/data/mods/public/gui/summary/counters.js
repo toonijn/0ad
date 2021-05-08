@@ -24,10 +24,10 @@ function formatSummaryValue(values)
 	return ret;
 }
 
-function getPlayerValuesPerTeam(team, index, type, counters, headings)
+function getPlayerValuesPerTeam(team, index, type, counters, headings, summarize)
 {
 	let fn = counters[headings.map(heading => heading.identifier).indexOf(type) - 1].fn;
-	return g_Teams[team].map(player => fn(g_GameData.sim.playerStates[player], index, type));
+	return g_Teams[team].map(player => fn(g_GameData.sim.playerStates[player], index, type, summarize));
 }
 
 function updateCountersPlayer(playerState, allCounters, allHeadings, idGUI, index)
@@ -38,7 +38,7 @@ function updateCountersPlayer(playerState, allCounters, allHeadings, idGUI, inde
 	{
 		let fn = counters[n].fn;
 		Engine.GetGUIObjectByName(idGUI + "[" + n + "]").caption =
-			formatSummaryValue(fn && fn(playerState, index, headings[+n + 1].identifier));
+			formatSummaryValue(fn && fn(playerState, index, headings[+n + 1].identifier, true));
 	}
 }
 
@@ -53,7 +53,7 @@ function updateCountersTeam(teamFn, allCounters, allHeadings, index)
 
 		for (let n in counters)
 			Engine.GetGUIObjectByName("valueDataTeam[" + team + "][" + n + "]").caption =
-				formatSummaryValue(teamFn(team, index, headings[+n + 1].identifier, counters, headings));
+				formatSummaryValue(teamFn(team, index, headings[+n + 1].identifier, counters, headings, true));
 	}
 }
 
@@ -86,6 +86,13 @@ function summaryArraySum(array)
 		summaryAddObject(sum, val);
 		return sum;
 	});
+}
+
+function peakSummary(data, index) {
+	let m = -Infinity;
+	for(let i = 0; i < index && i < data.length; ++i)
+		m = Math.max(m, data[i]);
+	return m;
 }
 
 function calculateTeamCounterDataHelper()
@@ -169,7 +176,7 @@ function calculateScoreTotal(playerState, index)
 		calculateExplorationScore(playerState, index);
 }
 
-function calculateScoreTeam(team, index, type, counters, headings)
+function calculateScoreTeam(team, index, type, counters, headings, summarize)
 {
 	if (type == "explorationScore")
 		return g_TeamHelperData[team].mapExploration[index] * 10;
@@ -178,7 +185,7 @@ function calculateScoreTeam(team, index, type, counters, headings)
 			t => calculateScoreTeam(team, index, t, counters, headings)).reduce(
 			(sum, value) => sum + value);
 
-	return summaryArraySum(getPlayerValuesPerTeam(team, index, type, counters, headings));
+	return summaryArraySum(getPlayerValuesPerTeam(team, index, type, counters, headings, summarize));
 }
 
 function calculateBuildings(playerState, index, type)
@@ -191,14 +198,19 @@ function calculateBuildings(playerState, index, type)
 	};
 }
 
-function calculateBuildingsTeam(team, index, type, counters, headings)
+function calculateBuildingsTeam(team, index, type, counters, headings, summarize)
 {
-	return summaryArraySum(getPlayerValuesPerTeam(team, index, type, counters, headings));
+	return summaryArraySum(getPlayerValuesPerTeam(team, index, type, counters, headings, summarize));
 }
 
-function calculateUnitsTeam(team, index, type, counters, headings)
+function calculateUnitsTeam(team, index, type, counters, headings, summarize)
 {
-	return summaryArraySum(getPlayerValuesPerTeam(team, index, type, counters, headings));
+	return summaryArraySum(getPlayerValuesPerTeam(team, index, type, counters, headings, summarize));
+}
+
+function calculatePopulationTeam(team, index, type, counters, headings, summarize)
+{
+	return summaryArraySum(getPlayerValuesPerTeam(team, index, type, counters, headings, summarize));
 }
 
 function calculateUnitsWithCaptured(playerState, index, type)
@@ -218,6 +230,16 @@ function calculateUnits(playerState, index, type)
 		"killed": playerState.sequences.enemyUnitsKilled[type][index],
 		"lost": playerState.sequences.unitsLost[type][index]
 	};
+}
+
+function calculatePopulation(playerState, index, type, summarize)
+{
+	let data = {
+		"population": playerState.sequences.population[type][index]
+	};
+	if(summarize)
+		data["populationPeak"] = peakSummary(playerState.sequences.population[type], index)
+	return data;
 }
 
 function calculateResources(playerState, index, type)
@@ -268,9 +290,9 @@ function calculateLivestockTrained(playerState, index)
 	return playerState.sequences.unitsTrained.Domestic[index];
 }
 
-function calculateResourcesTeam(team, index, type, counters, headings)
+function calculateResourcesTeam(team, index, type, counters, headings, summarize)
 {
-	return summaryArraySum(getPlayerValuesPerTeam(team, index, type, counters, headings));
+	return summaryArraySum(getPlayerValuesPerTeam(team, index, type, counters, headings, summarize));
 }
 
 function calculateResourceExchanged(playerState, index, type)
@@ -300,12 +322,12 @@ function calculateTradeIncome(playerState, index)
 	return playerState.sequences.tradeIncome[index];
 }
 
-function calculateMarketTeam(team, index, type, counters, headings)
+function calculateMarketTeam(team, index, type, counters, headings, summarize)
 {
 	if (type == "barterEfficency")
 		return calculatePercent(g_TeamHelperData[team].totalBought[index], g_TeamHelperData[team].totalSold[index]);
 
-	return summaryArraySum(getPlayerValuesPerTeam(team, index, type, counters, headings));
+	return summaryArraySum(getPlayerValuesPerTeam(team, index, type, counters, headings, summarize));
 }
 
 function calculateVegetarianRatio(playerState, index)
@@ -329,11 +351,6 @@ function calculateKillDeathRatio(playerState, index)
 		playerState.sequences.unitsLost.total[index]);
 }
 
-function calculatePopulationCount(playerState, index)
-{
-	return { "population": playerState.sequences.populationCount[index] };
-}
-
 function calculateMapExploration(playerState, index)
 {
 	return { "percent": playerState.sequences.percentMapExplored[index] };
@@ -349,7 +366,7 @@ function calculateMapPeakControl(playerState, index)
 	return { "percent": playerState.sequences.peakPercentMapControlled[index] };
 }
 
-function calculateMiscellaneousTeam(team, index, type, counters, headings)
+function calculateMiscellaneousTeam(team, index, type, counters, headings, summarize)
 {
 	if (type == "vegetarianRatio")
 		return calculatePercent(g_TeamHelperData[team].vegetarianFood[index], g_TeamHelperData[team].food[index]);
@@ -360,8 +377,8 @@ function calculateMiscellaneousTeam(team, index, type, counters, headings)
 	if (type == "killDeath")
 		return calculateRatio(g_TeamHelperData[team].enemyUnitsKilled[index], g_TeamHelperData[team].unitsLost[index]);
 
-	if (type == "bribes" || type == "population")
-		return summaryArraySum(getPlayerValuesPerTeam(team, index, type, counters, headings));
+	if (type == "bribes")
+		return summaryArraySum(getPlayerValuesPerTeam(team, index, type, counters, headings, summarize));
 
 	return { "percent": g_TeamHelperData[team][type][index] };
 }

@@ -95,8 +95,13 @@ var g_SummaryTypes = {
 		"postfix": ""
 	},
 	"population": {
-		"color": g_TypeColors.red,
+		"color": g_TypeColors.white,
 		"caption": translate("Population"),
+		"postfix": " / "
+	},
+	"populationPeak": {
+		"color": g_TypeColors.green,
+		"caption": translate("Population peak"),
 		"postfix": ""
 	},
 	"sold": {
@@ -347,7 +352,7 @@ function updateChart(number, category, item, itemNumber, type)
 			for (let index in g_GameData.sim.playerStates[1].sequences.time)
 			{
 				let value = g_ScorePanelsData[category].teamCounterFn(team, index, item,
-					g_ScorePanelsData[category].counters, g_ScorePanelsData[category].headings);
+					g_ScorePanelsData[category].counters, g_ScorePanelsData[category].headings, false);
 				if (type)
 					value = value[type];
 				data.push({ "x": g_GameData.sim.playerStates[1].sequences.time[index], "y": value });
@@ -361,7 +366,7 @@ function updateChart(number, category, item, itemNumber, type)
 			let data = [];
 			for (let index in playerState.sequences.time)
 			{
-				let value = g_ScorePanelsData[category].counters[itemNumber].fn(playerState, index, item);
+				let value = g_ScorePanelsData[category].counters[itemNumber].fn(playerState, index, item, false);
 				if (type)
 					value = value[type];
 				data.push({ "x": playerState.sequences.time[index], "y": value });
