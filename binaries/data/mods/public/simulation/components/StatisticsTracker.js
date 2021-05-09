@@ -49,8 +49,8 @@ StatisticsTracker.prototype.UpdateSequenceInterval = 30 * 1000;
 
 StatisticsTracker.prototype.Init = function()
 {
-	this.unitsClasses = this.template.UnitClasses._string.split(/\s+/);
-	this.buildingsClasses = this.template.StructureClasses._string.split(/\s+/);
+	this.unitsClasses = new Set(this.template.UnitClasses._string.split(/\s+/));
+	this.buildingsClasses = new Set(this.template.StructureClasses._string.split(/\s+/));
 
 	this.unitsTrained = {};
 	this.unitsLost = {};
@@ -236,9 +236,8 @@ StatisticsTracker.prototype.CacheEntity = function(entityID, entityIdentity, ent
 	entityIdentity = entityIdentity || Engine.QueryInterface(entityID, IID_Identity);
 	entityCost = entityCost || Engine.QueryInterface(entityID, IID_Cost);
 	let entityData = entityCost && entityIdentity ? {
-		id: entityID,
-		identity: entityIdentity,
-		cost: entityCost
+		popCost: entityCost.GetPopCost(),
+		unitClasses: entityIdentity.GetClassesList().filter((c) => this.unitsClasses.has(c))
 	} : null;
 	this.populationCache.set(entityID, entityData);
 	return entityData;
@@ -251,7 +250,7 @@ StatisticsTracker.prototype.UncacheEntity = function(entityID) {
 StatisticsTracker.prototype.GetEntity = function(entityID) {
 	if(this.populationCache.has(entityID))
 		return this.populationCache.get(entityID);
-
+	this.populationCacheMisses += 1;
 	return this.CacheEntity(entityID);
 }
 
@@ -494,40 +493,46 @@ StatisticsTracker.prototype.GetCurrentPopulation = function()
 	for (let unitClass of this.unitsClasses)
 		activeUnits[unitClass] = 0;
 
+	let t5 = tic();
 	let cmpPlayer = Engine.QueryInterface(this.entity, IID_Player);
 	if(!cmpPlayer)
 		return activeUnits;
 
 	activeUnits.total = cmpPlayer.GetPopulationCount();
 	activeUnits.limit = cmpPlayer.GetPopulationLimit();
+	t5.toc("  Total and limit")
 
 	let t2 = tic();
 	let cmpRangeManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_RangeManager);
-	let entities = new Set(cmpRangeManager.GetEntitiesByPlayer(cmpPlayer.playerID));
+	let entities = cmpRangeManager.GetEntitiesByPlayer(cmpPlayer.playerID);
+	let entitiesSet = new Set(entities);
 	t2.toc("  GetEntitiesByPlayer", "#"+entities.length);
 
 	let t4 = tic();
 	for(let cachedEntity of this.populationCache.keys())
-		if(!entities.has(cachedEntity))
+		if(!entitiesSet.has(cachedEntity))
 			this.populationCache.delete(cachedEntity);
 	t4.toc("  Remove lost entities")
 
+	let t6 = tic();
+	this.populationCacheMisses = 0;
+	let entityDatas = entities.map(entity => this.GetEntity(entity));
+	t6.toc("  GetEntity", "Cache misses: "+this.populationCacheMisses)
+
 	let t3 = tic();
-	for(let entity of entities)
+	this.populationCacheMisses = 0;
+	for(let entityData of entityDatas)
 	{
-		let entityData = this.GetEntity(entity);
-		if(!entityData) continue;
+		if(!entityData || entityData.unitClasses.length == 0) continue;
 
-		let classes = entityData.identity.GetClassesList();
-		let popcost = entityData.cost.GetPopCost();
+		let popCost = entityData.popCost;
 
-		for (let unitClass of this.unitsClasses)
-			if(classes.indexOf(unitClass) != -1)
-				activeUnits[unitClass] += popcost;
+		for (let unitClass of entityData.unitClasses)
+			activeUnits[unitClass] += popCost;
 	}
-	t3.toc("  Entity identity and cost")
+	t3.toc("  Count active units");
 
-	t1.toc(" GetCurrentPopulation");
+	t1.toc(" GetCurrentPopulation", JSON.stringify(activeUnits));
 
 	return activeUnits;
 };
