@@ -63,6 +63,8 @@ StatisticsTracker.prototype.Init = function()
 			this[counterName][unitClass] = 0;
 	}
 
+	this.populationCache = new Map();
+
 	this.resourcesGathered = {
 		"vegetarianFood": 0
 	};
@@ -196,6 +198,29 @@ StatisticsTracker.prototype.CounterIncrement = function(cmpIdentity, counter, ty
 		++this[counter][type];
 };
 
+StatisticsTracker.prototype.CacheEntity = function(entityID, entityIdentity, entityCost) {
+	entityIdentity = entityIdentity || Engine.QueryInterface(entityID, IID_Identity);
+	entityCost = entityCost || Engine.QueryInterface(entityID, IID_Cost);
+	let entityData = entityCost && entityIdentity ? {
+		id: entityID,
+		identity: entityIdentity,
+		cost: entityCost
+	} : null;
+	this.populationCache.set(entityID, entityData);
+	return entityData;
+}
+
+StatisticsTracker.prototype.UncacheEntity = function(entityID) {
+	this.populationCache.delete(entityID);
+}
+
+StatisticsTracker.prototype.GetEntity = function(entityID) {
+	if(this.populationCache.has(entityID))
+		return this.populationCache.get(entityID);
+
+	return this.CacheEntity(entityID);
+}
+
 /**
  * Counts the total number of units trained as well as an individual count for
  * each unit type. Based on templates.
@@ -209,6 +234,8 @@ StatisticsTracker.prototype.IncreaseTrainedUnitsCounter = function(trainedUnit)
 
 	let cmpCost = Engine.QueryInterface(trainedUnit, IID_Cost);
 	let costs = cmpCost && cmpCost.GetResourceCosts();
+
+	this.CacheEntity(trainedUnit, cmpUnitEntityIdentity, cmpCost);
 
 	for (let type of this.unitsClasses)
 		this.CounterIncrement(cmpUnitEntityIdentity, "unitsTrained", type);
@@ -244,6 +271,8 @@ StatisticsTracker.prototype.IncreaseConstructedBuildingsCounter = function(const
 
 StatisticsTracker.prototype.KilledEntity = function(targetEntity)
 {
+	this.UncacheEntity(targetEntity);
+
 	var cmpTargetEntityIdentity = Engine.QueryInterface(targetEntity, IID_Identity);
 	if (!cmpTargetEntityIdentity)
 		return;
@@ -280,6 +309,8 @@ StatisticsTracker.prototype.KilledEntity = function(targetEntity)
 
 StatisticsTracker.prototype.LostEntity = function(lostEntity)
 {
+	this.UncacheEntity(lostEntity);
+
 	var cmpLostEntityIdentity = Engine.QueryInterface(lostEntity, IID_Identity);
 	if (!cmpLostEntityIdentity)
 		return;
@@ -321,6 +352,8 @@ StatisticsTracker.prototype.CapturedEntity = function(capturedEntity)
 
 	let cmpCost = Engine.QueryInterface(capturedEntity, IID_Cost);
 	let costs = cmpCost && cmpCost.GetResourceCosts();
+
+	this.CacheEntity(capturedEntity, cmpCapturedEntityIdentity, cmpCost);
 
 	if (cmpCapturedEntityIdentity.HasClass("Unit"))
 	{
@@ -433,22 +466,23 @@ StatisticsTracker.prototype.GetCurrentPopulation = function()
 	activeUnits.limit = cmpPlayer.GetPopulationLimit();
 
 	let cmpRangeManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_RangeManager);
-	for(let entity of cmpRangeManager.GetEntitiesByPlayer(cmpPlayer.playerID))
+	let entities = new Set(cmpRangeManager.GetEntitiesByPlayer(cmpPlayer.playerID));
+
+	for(let cachedEntity of this.populationCache.keys())
+		if(!entities.has(cachedEntity))
+			this.populationCache.delete(cachedEntity);
+
+	for(let entity of entities)
 	{
-		let entityIdentity = Engine.QueryInterface(entity, IID_Identity);
-		let classes = entityIdentity.GetClassesList();
-		let popcost = -1;
+		let entityData = this.GetEntity(entity);
+		if(!entityData) continue;
+
+		let classes = entityData.identity.GetClassesList();
+		let popcost = entityData.cost.GetPopCost();
 
 		for (let unitClass of this.unitsClasses)
 			if(classes.indexOf(unitClass) != -1)
-			{
-				if(popcost == -1)
-				{
-					let entityCost = Engine.QueryInterface(entity, IID_Cost);
-					popcost = entityCost.GetPopCost();
-				}
 				activeUnits[unitClass] += popcost;
-			}
 	}
 
 	return activeUnits;
