@@ -274,8 +274,17 @@ void RegisterScriptFunctions_GUI(const ScriptRequest& rq)
 	ScriptFunction::Register<&DeleteCampaignSave>(rq, "DeleteCampaignSave");
 }
 
+
+double GetMicroseconds()
+{
+	return JS_Now();
+}
+
 void RegisterScriptFunctions_Simulation(const ScriptRequest& rq)
 {
+	// TODO
+	ScriptFunction::Register<&GetMicroseconds>(rq, "GetMicroseconds");
+	
 	ScriptFunction::Register<&Script_ListDirectoryFiles_Simulation>(rq, "ListDirectoryFiles");
 	ScriptFunction::Register<&Script_FileExists_Simulation>(rq, "FileExists");
 	ScriptFunction::Register<&Script_ReadJSONFile_Simulation>(rq, "ReadJSONFile");

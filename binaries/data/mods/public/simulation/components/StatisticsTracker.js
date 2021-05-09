@@ -1,5 +1,28 @@
 function StatisticsTracker() {}
 
+// Engine.LoadLibrary("rmgen");
+
+function milliseconds() {
+	return Engine.GetMicroseconds ? Engine.GetMicroseconds()/1000 : +new Date();
+}
+
+function tic()
+{
+	const a = {};
+	a.toc = function(name, extra)
+	{
+		a.end = milliseconds();
+		let d = a.end - a.start;
+		extra = extra || "";
+		let l = name + ": "+ (d).toFixed(3) + "ms; " + extra + "\n";
+		log(l);
+		print(l);
+		return d;
+	}
+	a.start = milliseconds();
+	return a;
+}
+
 StatisticsTracker.prototype.Schema =
 	"<a:help>This component records statistics over the course of the match, such as the number of trained, lost, captured and destroyed units and buildings The statistics are consumed by the summary screen and lobby rankings.</a:help>" +
 	"<a:example>" +
@@ -118,6 +141,9 @@ StatisticsTracker.prototype.GetBasicStatistics = function()
 
 StatisticsTracker.prototype.GetStatistics = function()
 {
+	let t = tic();
+	try {
+
 	return {
 		"unitsTrained": this.unitsTrained,
 		"unitsLost": this.unitsLost,
@@ -153,6 +179,14 @@ StatisticsTracker.prototype.GetStatistics = function()
 		"successfulBribes": this.successfulBribes,
 		"failedBribes": this.failedBribes
 	};
+
+	} finally {
+		let player = Engine.QueryInterface(this.entity, IID_Player);
+		t.toc(
+			"GetStatistics",
+			"P" + (player ? player.GetPlayerID() : 0)
+		);
+	}
 };
 
 StatisticsTracker.prototype.GetSequences = function()
@@ -451,6 +485,8 @@ StatisticsTracker.prototype.IncreaseTradeIncomeCounter = function(amount)
 
 StatisticsTracker.prototype.GetCurrentPopulation = function()
 {
+	let t1 = tic();
+
 	let activeUnits = {
 		"total": 0,
 		"limit": 0
@@ -465,13 +501,18 @@ StatisticsTracker.prototype.GetCurrentPopulation = function()
 	activeUnits.total = cmpPlayer.GetPopulationCount();
 	activeUnits.limit = cmpPlayer.GetPopulationLimit();
 
+	let t2 = tic();
 	let cmpRangeManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_RangeManager);
 	let entities = new Set(cmpRangeManager.GetEntitiesByPlayer(cmpPlayer.playerID));
+	t2.toc("  GetEntitiesByPlayer", "#"+entities.length);
 
+	let t4 = tic();
 	for(let cachedEntity of this.populationCache.keys())
 		if(!entities.has(cachedEntity))
 			this.populationCache.delete(cachedEntity);
+	t4.toc("  Remove lost entities")
 
+	let t3 = tic();
 	for(let entity of entities)
 	{
 		let entityData = this.GetEntity(entity);
@@ -484,6 +525,9 @@ StatisticsTracker.prototype.GetCurrentPopulation = function()
 			if(classes.indexOf(unitClass) != -1)
 				activeUnits[unitClass] += popcost;
 	}
+	t3.toc("  Entity identity and cost")
+
+	t1.toc(" GetCurrentPopulation");
 
 	return activeUnits;
 };
